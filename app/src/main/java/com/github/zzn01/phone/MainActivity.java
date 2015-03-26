@@ -1,4 +1,4 @@
-package com.prince.telephone;
+package com.github.zzn01.phone;
 
 import android.app.TabActivity;
 import android.content.Intent;
@@ -35,10 +35,9 @@ public class MainActivity extends TabActivity {
         Intent videosIntent = new Intent(this, ContactActivity.class);
         contact.setContent(videosIntent);
 
-        // Adding all TabSpec to TabHost
-        tabHost.addTab(callLog); // Adding photos tab
-        tabHost.addTab(favorite); // Adding songs tab
-        tabHost.addTab(contact); // Adding videos tab
+        tabHost.addTab(favorite);
+        tabHost.addTab(callLog);
+        tabHost.addTab(contact);
     }
 
     @Override

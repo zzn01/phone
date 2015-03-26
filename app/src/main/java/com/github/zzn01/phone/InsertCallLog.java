@@ -1,4 +1,4 @@
-package com.prince.telephone;
+package com.github.zzn01.phone;
 
 import android.app.Activity;
 import android.content.Intent;

@@ -1,7 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -9,15 +11,17 @@
         android:layoutMode="clipBounds"
         android:measureWithLargestChild="false"
         android:orientation="horizontal">
-    <SearchView
-        android:paddingEnd="@dimen/activity_horizontal_margin"
-        android:paddingRight="@dimen/activity_horizontal_margin"
-        android:clickable="true"
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_height="wrap_content"
-        android:layoutMode="opticalBounds"></SearchView>
+
+        <SearchView
+            android:paddingEnd="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"
+            android:clickable="true"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layoutMode="clipBounds"
+            android:id="@+id/call_search"></SearchView>
     </LinearLayout>
+
     <TabHost
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
