@@ -5,13 +5,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.text.Html;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ListView;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
@@ -20,41 +22,114 @@ import java.util.Date;
 
 
 public class CallLogDetailActivity extends ListActivity {
-    private class CallEntry {
-        public String number;
-        public String time;
-        public String date;
-        public int type;
-    }
-
+    private static final String TAG = "CallLog";
     private String name;
+    private int photoID;
 
     private ArrayList<CallEntry> callEntries;
-
-    private static final String TAG = "CallLog";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_call_log_detail);
 
+        callEntries = new ArrayList<>();
         Intent intent = getIntent();
+
+        photoID = intent.getIntExtra(CallLogActivity.CONTACT_PHOTO, -1);
+
         name = intent.getStringExtra(CallLogActivity.CONTACT_NAME);
+        Cursor curLog;
+        if (name == null || name.equals("")) {
+            name = intent.getStringExtra(CallLogActivity.CONTACT_NUMBER);
+            curLog = CallLogHelper.getCallLogsByNumber(getContentResolver(), name);
+        } else {
+            curLog = CallLogHelper.getCallLogsByName(getContentResolver(), name);
+        }
 
-        callEntries = new ArrayList<CallEntry>();
+        //TODO: check error
+        try {
+            setCallEntries(curLog);
+        } finally {
+            curLog.close();
+        }
 
-        Cursor curLog = CallLogHelper.getCallLogsByName(getContentResolver(), name);
-        setCallEntries(curLog);
-        curLog.close();
-
-        TextView header = new TextView(this);
-        header.setTextSize(15);
-        header.setText(name);
-        ListView lv = getListView();
-        lv.addHeaderView(header);
+        setHeader();
 
         setListAdapter(new MyAdapter(this, android.R.layout.simple_list_item_1,
                 R.id.tvNameMain, callEntries));
+    }
+
+    private void setHeader() {
+        TextView header = (TextView) findViewById(R.id.contact_name);
+        header.setText(name);
+        if (photoID != -1) {
+            ImageView pic = (ImageView) findViewById(R.id.contact_pic);
+            pic.setImageBitmap(ContactHelper.queryContactImage(getContentResolver(), photoID));
+        }
+    }
+
+    private void setDuration(int duration, TextView t) {
+        TimeDelta timeDelta = new TimeDelta(duration);
+        String time = "";
+        if (timeDelta.day != 0) {
+            time = time + timeDelta.day + getString(R.string.day);
+        }
+        if (timeDelta.hour != 0) {
+            time = time + timeDelta.hour + getString(R.string.hour);
+        }
+        time = time + timeDelta.min + getString(R.string.min) + timeDelta.sec + getString(R.string.sec);
+
+        t.setText(time);
+    }
+
+    private void setCallEntries(Cursor curLog) {
+        while (curLog.moveToNext()) {
+
+            CallEntry item = new CallEntry();
+
+            item.number = curLog.getString(curLog.getColumnIndex(android.provider.CallLog.Calls.NUMBER));
+
+            String callDate = curLog.getString(curLog.getColumnIndex(android.provider.CallLog.Calls.DATE));
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
+            item.date = formatter.format(new Date(Long.parseLong(callDate)));
+            item.type = curLog.getInt(curLog.getColumnIndex(android.provider.CallLog.Calls.TYPE));
+
+            item.time = curLog.getInt(curLog.getColumnIndex(android.provider.CallLog.Calls.DURATION));
+
+            callEntries.add(item);
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_call_log_detail, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        Log.d(TAG, "option select");
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private class CallEntry {
+        public String number;
+        public int time;
+        public String date;
+        public int type;
     }
 
     private class MyAdapter extends ArrayAdapter<CallEntry> {
@@ -66,8 +141,7 @@ public class CallLogDetailActivity extends ListActivity {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            View row = setList(position, parent);
-            return row;
+            return setList(position, parent);
         }
 
         private View setList(int position, ViewGroup parent) {
@@ -77,6 +151,7 @@ public class CallLogDetailActivity extends ListActivity {
 
             TextView tvNumber = (TextView) row.findViewById(R.id.number);
             TextView tvType = (TextView) row.findViewById(R.id.type);
+            TextView symbol = (TextView) row.findViewById(R.id.type_symbol);
 
             TextView tvDate = (TextView) row.findViewById(R.id.date);
             TextView tvTime = (TextView) row.findViewById(R.id.duration);
@@ -86,69 +161,25 @@ public class CallLogDetailActivity extends ListActivity {
             tvNumber.setText(item.number);
             switch (item.type) {
                 case android.provider.CallLog.Calls.OUTGOING_TYPE:
+                    symbol.setText(Html.fromHtml(CallLogActivity.OUTGOING_SYMBOL));
                     tvType.setText(R.string.type_outgoing_call);
                     break;
                 case android.provider.CallLog.Calls.MISSED_TYPE:
+                    symbol.setText(Html.fromHtml(CallLogActivity.MISSED_SYMBOL));
                     tvType.setText(R.string.type_missed_call);
                     break;
                 case android.provider.CallLog.Calls.INCOMING_TYPE:
+                    symbol.setText(Html.fromHtml(CallLogActivity.INCOMING_SYMBOL));
                     tvType.setText(R.string.type_incoming_call);
                     break;
             }
-
-            tvTime.setText("( " + item.time + "sec )");
             tvDate.setText(item.date);
+
+            setDuration(item.time, tvTime);
 
             row.setClickable(false);
             return row;
         }
-    }
-
-    private void setCallEntries(Cursor curLog) {
-        while (curLog.moveToNext()) {
-
-            CallEntry item = new CallEntry();
-
-            item.number = curLog.getString(curLog
-                    .getColumnIndex(android.provider.CallLog.Calls.NUMBER));
-
-            String callDate = curLog.getString(curLog
-                    .getColumnIndex(android.provider.CallLog.Calls.DATE));
-            SimpleDateFormat formatter = new SimpleDateFormat(
-                    "yyyy-MM -dd HH:mm");
-
-            item.date = formatter.format(new Date(Long
-                    .parseLong(callDate)));
-            item.type = curLog.getInt(curLog.getColumnIndex(android.provider.CallLog.Calls.TYPE));
-
-
-            item.time = curLog.getString(curLog
-                    .getColumnIndex(android.provider.CallLog.Calls.DURATION));
-
-            callEntries.add(item);
-        }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_call_log, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 }
 

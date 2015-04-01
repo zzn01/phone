@@ -3,6 +3,7 @@
     <string name="app_name">ReadingCallLogs</string>
     <string name="hello_world">Hello world!</string>
     <string name="menu_settings">Settings</string>
+    <string name="menu_search">Search</string>
     <string name="title_activity_main">Call Logs</string>
     <string name="add">Insert Call Log</string>
 
@@ -18,11 +19,18 @@
 
     <string name="call_it">回电</string>
     <string name="call_detail">详情</string>
-    <string name="title_activity_call_log_detail">CallLogDetailActivity</string>
+    <string name="title_activity_call_log_detail">通话详情</string>
 
     <string name="type_incoming_call">来电</string>
     <string name="type_outgoing_call">外拨电话</string>
     <string name="type_missed_call">未接来电</string>
+
     <string name="title_activity_phone_call">PhoneCallActivity</string>
+
+    <string name="day">天</string>
+    <string name="hour">小时</string>
+    <string name="min">分</string>
+    <string name="sec">秒</string>
+
 
 </resources>

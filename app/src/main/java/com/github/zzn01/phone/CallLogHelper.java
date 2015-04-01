@@ -8,27 +8,48 @@ import android.provider.CallLog;
 import android.util.Log;
 
 public class CallLogHelper {
+    private static final String logOrder = android.provider.CallLog.Calls.DATE + " DESC";
+    private static final String contentUri = "content://call_log/calls";
+    private static final String[] projection = {
+            CallLog.Calls.CACHED_NAME,
+            CallLog.Calls.NUMBER,
+            CallLog.Calls.TYPE,
+            CallLog.Calls.DURATION,
+            CallLog.Calls.DATE,
+            CallLog.Calls.CACHED_PHOTO_ID,
+    };
+
+
+    public static Cursor execute(ContentResolver cr, String select, String[] args) {
+        return execute(cr, select, args, projection);
+    }
+
+    public static Cursor execute(ContentResolver cr, String select, String[] args, String[] _projection) {
+        Uri callUri = Uri.parse(contentUri);
+        if (_projection == null) {
+            _projection = projection;
+        }
+
+        return cr.query(callUri, _projection, select, args, logOrder);
+    }
 
     public static Cursor getAllCallLogs(ContentResolver cr) {
         // reading all data in descending order according to DATE
-        String strOrder = android.provider.CallLog.Calls.DATE + " DESC";
-        Uri callUri = Uri.parse("content://call_log/calls");
-        Cursor curCallLogs = cr.query(callUri, null, null, null, strOrder);
+        return execute(cr, null, null);
+    }
 
-        return curCallLogs;
+    public static Cursor getCallLogsByNumber(ContentResolver cr, String number) {
+        String select = CallLog.Calls.NUMBER + "=?";
+        String[] args = {number};
+
+        return execute(cr, select, args);
     }
 
     public static Cursor getCallLogsByName(ContentResolver cr, String name) {
-        // reading all data in descending order according to DATE
-        String strOrder = android.provider.CallLog.Calls.DATE + " DESC";
-        Uri callUri = Uri.parse("content://call_log/calls");
-
         String select = android.provider.CallLog.Calls.CACHED_NAME + "=?";
         String[] args = {name};
 
-        Cursor curCallLogs = cr.query(callUri, null, select, args, strOrder);
-
-        return curCallLogs;
+        return execute(cr, select, args);
     }
 
     public static void insertPlaceholderCall(ContentResolver contentResolver,

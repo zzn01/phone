@@ -7,66 +7,86 @@
     android:orientation="vertical">
 
     <LinearLayout
+        android:id="@+id/call_detail_item"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:id="@+id/call_detail_item"
         android:clickable="false"
-        android:longClickable="false"
         android:focusableInTouchMode="false"
+        android:longClickable="false"
+        android:orientation="horizontal"
         android:paddingLeft="1dp">
 
         <TextView
-            android:clickable="false"
-            android:longClickable="false"
+            android:id="@+id/type_symbol"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="symbol"
+            android:textSize="@dimen/large" />
+
+        <TextView
+            android:id="@+id/type"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Type"
+            android:textSize="@dimen/large"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="5dp"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent" />
+
+        <TextView
             android:id="@+id/number"
-            android:textSize="@dimen/padding_large"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="10dp"
-            android:text="Number" />
+            android:text="Number"
+            android:textSize="@dimen/large" />
 
-        <TextView
-            android:textSize="@dimen/padding_large"
-            android:clickable="false"
-            android:longClickable="false"
-            android:id="@+id/type"
-            android:layout_width="wrap_content"
-            android:text="Type"
-            android:layout_height="wrap_content" />
     </LinearLayout>
 
     <LinearLayout
-        android:clickable="false"
-        android:longClickable="false"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:clickable="false"
+        android:longClickable="false"
         android:orientation="horizontal"
         android:paddingLeft="1dp">
 
         <TextView
-            android:textSize="@dimen/padding_large"
-            android:clickable="false"
-            android:longClickable="false"
             android:id="@+id/date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="10dp"
-            android:text="Date" />
-
-        <TextView
-            android:textSize="@dimen/padding_large"
             android:clickable="false"
             android:longClickable="false"
+            android:text="Date"
+            android:textSize="@dimen/large" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clickable="false"
+        android:longClickable="false"
+        android:orientation="horizontal"
+        android:paddingLeft="1dp">
+
+        <TextView
             android:id="@+id/duration"
-            android:text="Duration"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:clickable="false"
+            android:longClickable="false"
+            android:text="Duration"
+            android:textSize="@dimen/large" />
     </LinearLayout>
 
     <Space
-        android:minHeight="@dimen/padding_small"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/padding_small" />
 
 </LinearLayout>

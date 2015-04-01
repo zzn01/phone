@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -13,9 +14,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
@@ -24,89 +23,40 @@ import java.util.Date;
 
 
 public class CallLogActivity extends ListActivity {
-
-    private class CallLog {
-        public String name;
-        public String number;
-        public String time;
-        public String date;
-        public String type;
-    }
-
     public static final String CONTACT_NAME = "com.github.zzn01.telephone.CallLogActivity.name";
-
-    ArrayList<CallLog> callLogs;
-    private View currentRow;
-
+    public static final String CONTACT_NUMBER = "com.github.zzn01.telephone.CallLogActivity.number";
+    public static final String CONTACT_PHOTO = "com.github.zzn01.telephone.CallLogActivity.photo";
+    public static final String OUTGOING_SYMBOL = "<font color=green>\u2197</font>";
+    public static final String INCOMING_SYMBOL = "<font color=green>\u2199</font>";
+    public static final String MISSED_SYMBOL = "<font color=red>\u2199</font>";
+    private static final int MAX_COUNT = 3;
     private static final String TAG = "CallLog";
+    ArrayList<CallLogEntry> callLogEntries;
+    private View currentRow;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_call_log);
+    }
 
-        callLogs = new ArrayList<CallLog>();
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        callLogEntries = new ArrayList<>();
 
         Cursor curLog = CallLogHelper.getAllCallLogs(getContentResolver());
-        setCallLogs(curLog);
+        setCallLogEntries(curLog);
         curLog.close();
 
         setListAdapter(new MyAdapter(this, android.R.layout.simple_list_item_1,
-                R.id.tvNameMain, callLogs));
-    }
+                R.id.tvNameMain, callLogEntries));
 
-    private class MyAdapter extends ArrayAdapter<CallLog> {
-
-        public MyAdapter(Context context, int resource, int textViewResourceId,
-                         ArrayList<CallLog> l) {
-            super(context, resource, textViewResourceId, l);
-
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-
-            View row = setList(position, parent);
-            return row;
-        }
-
-        private View setList(int position, ViewGroup parent) {
-            LayoutInflater inf = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-            View row = inf.inflate(R.layout.call_log_item_style, parent, false);
-
-            TextView tvName = (TextView) row.findViewById(R.id.tvNameMain);
-            TextView tvNumber = (TextView) row.findViewById(R.id.tvNumberMain);
-            TextView tvTime = (TextView) row.findViewById(R.id.tvTime);
-            TextView tvDate = (TextView) row.findViewById(R.id.tvDate);
-            ImageView tvType = (ImageView) row.findViewById(R.id.type_img);
-
-            CallLog item = callLogs.get(position);
-            if (item.name == null) {
-                tvName.setText(item.number);
-                tvNumber.setText("");
-            } else {
-                tvName.setText(item.name);
-                tvNumber.setText(item.number);
-            }
-
-            if (item.type.equals("1")) {
-                tvType.setImageDrawable(getDrawable(R.drawable.ic_action_forward));
-            } else
-                tvType.setImageDrawable(getDrawable(R.drawable.ic_action_back));
-
-            tvTime.setText("( " + item.time + "sec )");
-            tvDate.setText(item.date);
-
-            LinearLayout op = (LinearLayout) row.findViewById(R.id.operation);
-            op.setVisibility(View.GONE);
-
-            return row;
-        }
+        Log.v(TAG, "on Resume");
     }
 
     private void switchState(View row) {
-
         LinearLayout op = (LinearLayout) row.findViewById(R.id.operation);
         switch (op.getVisibility()) {
             case View.GONE:
@@ -118,38 +68,45 @@ public class CallLogActivity extends ListActivity {
             default:
                 op.setVisibility(View.GONE);
         }
-        Log.d(TAG, "click it " + row.getId());
     }
 
-    private void setCallLogs(Cursor curLog) {
+    private void setCallLogEntries(Cursor curLog) {
+        CallLogEntry item = null;
         while (curLog.moveToNext()) {
+            String number = curLog.getString(curLog.getColumnIndex(android.provider.CallLog.Calls.NUMBER));
 
-            CallLog item = new CallLog();
+            int size = callLogEntries.size();
+            if (size > 0) {
+                item = callLogEntries.get(size - 1);
+            }
 
-            item.number = curLog.getString(curLog
-                    .getColumnIndex(android.provider.CallLog.Calls.NUMBER));
-            item.name = curLog.getString(curLog
-                    .getColumnIndex(android.provider.CallLog.Calls.CACHED_NAME));
+            if (item == null || !number.equals(item.number)) {
+                item = new CallLogEntry();
+                item.number = number;
+                callLogEntries.add(item);
+                item.name = curLog.getString(curLog.getColumnIndex(android.provider.CallLog.Calls.CACHED_NAME));
+                item.photoID = curLog.getInt(curLog.getColumnIndex(android.provider.CallLog.Calls.CACHED_PHOTO_ID));
+            }
 
-            String callDate = curLog.getString(curLog
-                    .getColumnIndex(android.provider.CallLog.Calls.DATE));
-            SimpleDateFormat formatter = new SimpleDateFormat(
-                    "yyyy-MM -dd HH:mm");
+            String callDate = curLog.getString(curLog.getColumnIndex(android.provider.CallLog.Calls.DATE));
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
-            item.date = formatter.format(new Date(Long
-                    .parseLong(callDate)));
-            item.type = curLog.getString(curLog
-                    .getColumnIndex(android.provider.CallLog.Calls.TYPE));
+            item.lastDate = formatter.format(new Date(Long.parseLong(callDate)));
+            int type = curLog.getInt(curLog.getColumnIndex(android.provider.CallLog.Calls.TYPE));
 
-            item.time = curLog.getString(curLog
-                    .getColumnIndex(android.provider.CallLog.Calls.DURATION));
-
-            callLogs.add(item);
+            item.types.add(type);
         }
     }
 
-    @Override
-    public void onListItemClick(ListView l, View v, int position, long id) {
+    public void listItemClick(View v) {
+
+        Log.d(TAG, "List item click ");
+
+        if (currentRow == v) {
+            switchState(currentRow);
+            currentRow = null;
+            return;
+        }
 
         if (currentRow != null) {
             switchState(currentRow);
@@ -178,12 +135,14 @@ public class CallLogActivity extends ListActivity {
         Intent intent = new Intent(this, CallLogDetailActivity.class);
         Log.d("Button", "call detail");
 
-        TextView n = (TextView) currentRow.findViewById(R.id.tvNameMain);
-        intent.putExtra(CONTACT_NAME, n.getText().toString());
+        CallLogEntry callLogEntry = callLogEntries.get((int) currentRow.getTag());
+
+        intent.putExtra(CONTACT_NAME, callLogEntry.name);
+        intent.putExtra(CONTACT_NUMBER, callLogEntry.number);
+        intent.putExtra(CONTACT_PHOTO, callLogEntry.photoID);
 
         startActivity(intent);
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -205,5 +164,91 @@ public class CallLogActivity extends ListActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private class CallLogEntry {
+        public String name;
+        public String number;
+        public String lastDate;
+        public int photoID;
+        ArrayList<Integer> types;
+
+        CallLogEntry() {
+            types = new ArrayList<>();
+        }
+    }
+
+    private class MyAdapter extends ArrayAdapter<CallLogEntry> {
+
+        public MyAdapter(Context context, int resource, int textViewResourceId,
+                         ArrayList<CallLogEntry> l) {
+            super(context, resource, textViewResourceId, l);
+
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+
+            return setList(position, parent);
+        }
+
+        private void setType(ArrayList<Integer> types, TextView t) {
+            String type = "";
+            String suffix = "";
+
+            int count = types.size();
+            if (count > MAX_COUNT) {
+                suffix = "(" + count + ")";
+                count = MAX_COUNT;
+            }
+            for (int i = 0; i < count; ++i) {
+                switch (types.get(i)) {
+                    case android.provider.CallLog.Calls.OUTGOING_TYPE:
+                        type += OUTGOING_SYMBOL;
+                        break;
+                    case android.provider.CallLog.Calls.MISSED_TYPE:
+                        type += MISSED_SYMBOL;
+                        break;
+                    case android.provider.CallLog.Calls.INCOMING_TYPE:
+                        type += INCOMING_SYMBOL;
+                        break;
+                }
+            }
+            t.setText(Html.fromHtml(type + suffix));
+        }
+
+        private View setList(int position, ViewGroup parent) {
+            LayoutInflater inf = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+            View row = inf.inflate(R.layout.call_log_item_style, parent, false);
+
+            TextView tvName = (TextView) row.findViewById(R.id.tvNameMain);
+            TextView tvNumber = (TextView) row.findViewById(R.id.tvNumberMain);
+            TextView tvDate = (TextView) row.findViewById(R.id.tvDate);
+            TextView tvType = (TextView) row.findViewById(R.id.type_img);
+
+            CallLogEntry item = callLogEntries.get(position);
+
+            tvName.setText(item.name);
+            tvNumber.setText(item.number);
+
+            setType(item.types, tvType);
+
+            tvDate.setText(item.lastDate);
+
+            LinearLayout op = (LinearLayout) row.findViewById(R.id.operation);
+            op.setVisibility(View.GONE);
+
+            row.setTag(position);
+
+            row.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    listItemClick(v);
+                }
+            });
+
+            return row;
+        }
     }
 }
