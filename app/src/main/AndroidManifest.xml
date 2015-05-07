@@ -57,6 +57,16 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.github.zzn01.phone.MainActivity" />
         </activity>
+        <activity
+            android:name=".ContactDetailActivity"
+            android:icon="@android:color/transparent"
+            android:label="@string/title_activity_call_log_detail"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.github.zzn01.phone.MainActivity" />
+        </activity>
+
     </application>
 
 </manifest>
