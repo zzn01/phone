@@ -1,17 +1,17 @@
 package com.github.zzn01.phone;
 
-import android.app.TabActivity;
+import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.Window;
-import android.widget.TabHost;
 
-public class MainActivity extends TabActivity {
-
-    private TabHost tabHost;
+public class MainActivity extends Activity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -20,26 +20,37 @@ public class MainActivity extends TabActivity {
 
         setContentView(R.layout.main);
 
-        tabHost = (TabHost) findViewById(android.R.id.tabhost);
+        findViewById(R.id.tab_favorite).setOnClickListener(
+            new View.OnClickListener(){
+                @Override
+                public void onClick(View v){
+                    switchFragment(FavoriteFragment.newInstance());
+                }
+            }
+        );
+        findViewById(R.id.tab_log).setOnClickListener(
+            new View.OnClickListener(){
+                @Override
+                public void onClick(View v){
+                    switchFragment(LogFragment.newInstance());
+                }
+            }
+        );
 
-        TabHost.TabSpec favorite = tabHost.newTabSpec("Favorite");
-        favorite.setIndicator(getString(R.string.favorite));
-        Intent songsIntent = new Intent(this, FavoriteActivity.class);
-        favorite.setContent(songsIntent);
+        findViewById(R.id.tab_contact).setOnClickListener(
+            new View.OnClickListener(){
+                @Override
+                public void onClick(View v){
+                    switchFragment(ContactFragment.newInstance());
+                }
+            }
+        );
+    }
 
-        TabHost.TabSpec callLog = tabHost.newTabSpec("CallLog");
-        callLog.setIndicator(getString(R.string.call_log));
-        Intent photosIntent = new Intent(this, CallLogActivity.class);
-        callLog.setContent(photosIntent);
-
-        TabHost.TabSpec contact = tabHost.newTabSpec("Contacts");
-        contact.setIndicator(getString(R.string.contacts));
-        Intent videosIntent = new Intent(this, ContactActivity.class);
-        contact.setContent(videosIntent);
-
-        tabHost.addTab(favorite);
-        tabHost.addTab(callLog);
-        tabHost.addTab(contact);
+    public void switchFragment(Fragment fragment){
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        ft.replace(R.id.main_container, fragment);
+        ft.commit();
     }
 
     @Override

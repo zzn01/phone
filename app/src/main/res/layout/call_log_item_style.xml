@@ -71,51 +71,39 @@
 
         <LinearLayout
             android:id="@+id/operation"
-            android:layout_width="wrap_content"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:paddingLeft="@dimen/padding_medium">
-
-            <LinearLayout
-                android:id="@+id/btn_call_it"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:onClick="call_it"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:onClick="call_it"
-                    android:text="@string/call_it"
-                    android:textColor="@android:color/holo_blue_dark" />
-            </LinearLayout>
 
             <Space
                 android:layout_width="@dimen/padding_medium"
                 android:layout_height="@dimen/padding_medium" />
 
             <LinearLayout
-                android:id="@+id/btn_detail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:onClick="call_detail"
-                android:orientation="vertical">
+                android:focusable="false"
+                android:orientation="horizontal">
 
                 <TextView
+                    android:id="@+id/btn_call_it"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:text="@string/call_it"
+                    android:textColor="@android:color/holo_blue_dark" />
+
+                <Space
+                    android:layout_width="@dimen/padding_medium"
+                    android:layout_height="@dimen/padding_medium" />
 
                 <TextView
+                    android:id="@+id/btn_detail"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/call_detail" />
-
             </LinearLayout>
+
         </LinearLayout>
     </LinearLayout>
 

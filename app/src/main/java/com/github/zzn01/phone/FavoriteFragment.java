@@ -1,6 +1,6 @@
 package com.github.zzn01.phone;
 
-import android.app.ListActivity;
+import android.app.ListFragment;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,8 +20,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+/**
+ * Created by zzn on 5/1/15.
+ */
+public class FavoriteFragment extends ListFragment {
 
-public class CallLogActivity extends ListActivity {
     public static final String CONTACT_NAME = "com.github.zzn01.telephone.CallLogActivity.name";
     public static final String CONTACT_NUMBER = "com.github.zzn01.telephone.CallLogActivity.number";
     public static final String CONTACT_PHOTO = "com.github.zzn01.telephone.CallLogActivity.photo";
@@ -34,26 +36,36 @@ public class CallLogActivity extends ListActivity {
     ArrayList<CallLogEntry> callLogEntries;
     private View currentRow;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_call_log);
+    public static LogFragment newInstance() {
+        final LogFragment fragment = new LogFragment();
+        return fragment;
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater,
+                             ViewGroup container, Bundle savedInstanceState) {
+
+        if (container == null) {
+            return null;
+        }
 
         callLogEntries = new ArrayList<>();
 
-        Cursor curLog = CallLogHelper.getAllCallLogs(getContentResolver());
+        Cursor curLog = CallLogHelper.getAllCallLogs(inflater.getContext().getContentResolver());
         setCallLogEntries(curLog);
         curLog.close();
 
-        setListAdapter(new MyAdapter(this, android.R.layout.simple_list_item_1,
+        setListAdapter(new MyAdapter(inflater.getContext(), android.R.layout.simple_list_item_1,
                 R.id.tvNameMain, callLogEntries));
 
         Log.v(TAG, "on Resume");
+
+        return super.onCreateView(inflater, container, savedInstanceState);
     }
 
     private void switchState(View row) {
@@ -132,7 +144,7 @@ public class CallLogActivity extends ListActivity {
     }
 
     public void call_detail(View v) {
-        Intent intent = new Intent(this, CallLogDetailActivity.class);
+        Intent intent = new Intent(getActivity(), CallLogDetailActivity.class);
         Log.d("Button", "call detail");
 
         CallLogEntry callLogEntry = callLogEntries.get((int) currentRow.getTag());
@@ -142,13 +154,7 @@ public class CallLogActivity extends ListActivity {
         intent.putExtra(CONTACT_PHOTO, callLogEntry.photoID);
 
         startActivity(intent);
-    }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_call_log, menu);
-        return true;
     }
 
     @Override
@@ -182,6 +188,7 @@ public class CallLogActivity extends ListActivity {
 
         public MyAdapter(Context context, int resource, int textViewResourceId,
                          ArrayList<CallLogEntry> l) {
+
             super(context, resource, textViewResourceId, l);
 
         }
@@ -218,7 +225,7 @@ public class CallLogActivity extends ListActivity {
         }
 
         private View setList(int position, ViewGroup parent) {
-            LayoutInflater inf = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            LayoutInflater inf = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
             View row = inf.inflate(R.layout.call_log_item_style, parent, false);
 

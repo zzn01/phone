@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.provider.CallLog;
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -36,12 +37,12 @@ public class CallLogDetailActivity extends ListActivity {
         callEntries = new ArrayList<>();
         Intent intent = getIntent();
 
-        photoID = intent.getIntExtra(CallLogActivity.CONTACT_PHOTO, -1);
+        photoID = intent.getIntExtra(LogFragment.CONTACT_PHOTO, -1);
 
-        name = intent.getStringExtra(CallLogActivity.CONTACT_NAME);
+        name = intent.getStringExtra(LogFragment.CONTACT_NAME);
         Cursor curLog;
         if (name == null || name.equals("")) {
-            name = intent.getStringExtra(CallLogActivity.CONTACT_NUMBER);
+            name = intent.getStringExtra(LogFragment.CONTACT_NUMBER);
             curLog = CallLogHelper.getCallLogsByNumber(getContentResolver(), name);
         } else {
             curLog = CallLogHelper.getCallLogsByName(getContentResolver(), name);
@@ -160,16 +161,16 @@ public class CallLogDetailActivity extends ListActivity {
 
             tvNumber.setText(item.number);
             switch (item.type) {
-                case android.provider.CallLog.Calls.OUTGOING_TYPE:
-                    symbol.setText(Html.fromHtml(CallLogActivity.OUTGOING_SYMBOL));
+                case CallLog.Calls.OUTGOING_TYPE:
+                    symbol.setText(Html.fromHtml(LogFragment.OUTGOING_SYMBOL));
                     tvType.setText(R.string.type_outgoing_call);
                     break;
-                case android.provider.CallLog.Calls.MISSED_TYPE:
-                    symbol.setText(Html.fromHtml(CallLogActivity.MISSED_SYMBOL));
+                case CallLog.Calls.MISSED_TYPE:
+                    symbol.setText(Html.fromHtml(LogFragment.MISSED_SYMBOL));
                     tvType.setText(R.string.type_missed_call);
                     break;
-                case android.provider.CallLog.Calls.INCOMING_TYPE:
-                    symbol.setText(Html.fromHtml(CallLogActivity.INCOMING_SYMBOL));
+                case CallLog.Calls.INCOMING_TYPE:
+                    symbol.setText(Html.fromHtml(LogFragment.INCOMING_SYMBOL));
                     tvType.setText(R.string.type_incoming_call);
                     break;
             }
