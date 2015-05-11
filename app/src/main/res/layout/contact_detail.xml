@@ -6,12 +6,6 @@
     android:orientation="horizontal"
     android:paddingLeft="1dp">
 
-    <TextView
-        android:id="@+id/pic"
-        android:text="unknow"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
