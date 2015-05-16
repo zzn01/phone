@@ -21,6 +21,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import utils.TimeDelta;
+
 
 public class CallLogDetailActivity extends ListActivity {
     private static final String TAG = "CallLog";

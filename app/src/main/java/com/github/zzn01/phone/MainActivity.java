@@ -45,6 +45,10 @@ public class MainActivity extends Activity {
                 }
             }
         );
+
+        switchFragment(FavoriteFragment.newInstance());
+
+
     }
 
     public void switchFragment(Fragment fragment){
@@ -63,8 +67,8 @@ public class MainActivity extends Activity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.item1) {
-            Intent intent = new Intent(MainActivity.this, InsertCallLog.class);
-            startActivity(intent);
+           // Intent intent = new Intent(MainActivity.this, InsertCallLog.class);
+           // startActivity(intent);
         }
         return super.onOptionsItemSelected(item);
     }

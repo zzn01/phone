@@ -48,15 +48,12 @@ public class ContactFragment extends ListFragment {
             return null;
         }
 
-        //ContactHelper.testReadAll(inflater.getContext().getContentResolver());
-
         Cursor curLog = ContactHelper.execute(inflater.getContext().getContentResolver(), null, null);
         getContacts(curLog);
         curLog.close();
 
-
         setListAdapter(new ContactAdapter(inflater.getContext(), android.R.layout.simple_list_item_1,
-                R.id.contact_name, contacts));
+                 contacts));
 
         return super.onCreateView(inflater, container, savedInstanceState);
     }
@@ -76,10 +73,10 @@ public class ContactFragment extends ListFragment {
 
     private class ContactAdapter extends ArrayAdapter<SimpleContact> {
 
-        public ContactAdapter(Context context, int resource, int textViewResourceId,
+        public ContactAdapter(Context context, int resource,
                          ArrayList<SimpleContact> l) {
 
-            super(context, resource, textViewResourceId, l);
+            super(context, resource, l);
 
         }
 

@@ -1,13 +1,12 @@
 package com.github.zzn01.phone;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -16,14 +15,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.Space;
 import android.widget.TextView;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
+
+import utils.Pair;
 
 
 public class ContactDetailActivity extends Activity {
@@ -35,78 +35,59 @@ public class ContactDetailActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.contact_detail_activity);
 
         Intent intent = getIntent();
 
         id = intent.getIntExtra(ContactFragment.CONTACT_INFO, -1);
-
         contactInfo = ContactHelper.getContact(getContentResolver(), id);
 
+        Log.i(TAG, contactInfo.toString());
 
-        setContentView(R.layout.contact_detail_activity);
-
-
-        ArrayList phone = contactInfo.phone;
-
-        phone.addAll(contactInfo.org);
-        if (!phone.isEmpty()) {
-            ListView lv = (ListView) findViewById(R.id.phone_list);
-            lv.setAdapter(new PhoneAdapter(this, android.R.layout.simple_list_item_1,
-                    R.id.info, phone, "phone"));
-        }
-
-
-        if (!contactInfo.email.isEmpty()) {
-            ListView lv2 = (ListView) findViewById(R.id.email_list);
-            lv2.setAdapter(new EmailAdapter(this, android.R.layout.simple_list_item_1,
-                    R.id.info, contactInfo.email, "email"));
-        }
-
-
-        /*
-        ContactView view = new ContactView(this);
-        if (!contactInfo.phone.isEmpty()) {
-            view.addView(contactInfo.phone, "phone");
-        }
-
-        if (!contactInfo.email.isEmpty()) {
-            view.addView(contactInfo.email, "email");
-        }
-        if (!contactInfo.org.isEmpty()) {
-            view.addView(contactInfo.org, "email");
-        }
-        view.setView();
-        */
+        initHeader();
+        initContactView();
+        initLogView();
     }
 
-    /*
+    private void initHeader(){
+        TextView header = (TextView) findViewById(R.id.contact_name);
+        header.setText(contactInfo.name);
+    }
+
+    private void initContactView(){
+        ContactView view = new ContactView((LinearLayout)findViewById(R.id.contact_detail));
+        if (!contactInfo.phone.isEmpty()) {
+            view.addView(new PhoneAdapter(this, R.layout.contact_item, contactInfo.phone), "phone");
+        }
+
+        if (!contactInfo.email.isEmpty()) {
+            view.addView(new EmailAdapter(this, R.layout.contact_item, contactInfo.email), "email");
+        }
+    }
+
+    private void initLogView(){
+
+    }
+
     private class ContactView {
         private LayoutInflater inflater;
         private LinearLayout parent;
-        private Context context;
-        private ArrayList<View> views;
 
-        public ContactView(Context c){
+        public ContactView(LinearLayout root){
             inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            parent = (LinearLayout) inflater.inflate(R.layout.contact_detail_activity, null);
-            context = c;
-
-            views = new ArrayList<>();
+            parent = root;
         }
 
-        public void addView(ArrayList<String> list, String id) {
+        public void addView(ContactAdapter adapter, String id) {
+            View custom = inflater.inflate(R.layout.contact_fragment, null);
 
-            View custom = inflater.inflate(R.layout.contact_detail_fragment, null);
             ListView lv = (ListView) custom.findViewById(R.id.contact_list);
-            lv.setAdapter(new PhoneAdapter(context, android.R.layout.simple_list_item_1,
-                    R.id.info, list, id));
+            lv.setAdapter(adapter);
+
+            TextView symbol = (TextView) custom.findViewById(R.id.contact_symbol);
+            symbol.setText(id);
 
             parent.addView(custom);
-            parent.addView(getDivider());
-        }
-
-        public void setView() {
-            setContentView(parent);
         }
 
         private View getDivider() {
@@ -117,7 +98,6 @@ public class ContactDetailActivity extends Activity {
             return divider;
         }
     }
-    */
 
 
     @Override
@@ -143,116 +123,127 @@ public class ContactDetailActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    private class PhoneAdapter extends ArrayAdapter<String> {
-        private ArrayList<String> data;
-        String dataType;
+    private class ContactAdapter extends ArrayAdapter<Pair<String,String>> {
+        private ArrayList<Pair<String,String>> data;
+        private LayoutInflater inflater;
 
-        public PhoneAdapter(Context context, int resource, int textViewResourceId,
-                         ArrayList<String> l, String type) {
-            super(context, resource, textViewResourceId, l);
+        public ContactAdapter(Context context, int resource, ArrayList<Pair<String,String>> l) {
+            super(context, resource, l);
 
+            inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             data = l;
-            dataType = type;
         }
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            return setList(position, parent);
-        }
+            View row;
 
-        private View setList(int position, ViewGroup parent) {
-            LayoutInflater inf = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-            View row = inf.inflate(R.layout.contact_detail, parent, false);
+            if (convertView==null) {
+                row = inflater.inflate(R.layout.contact_item, parent, false);
+            }else{
+                row = convertView;
+            }
 
             TextView info = (TextView) row.findViewById(R.id.info);
             TextView type = (TextView) row.findViewById(R.id.type);
-            Button action = (Button) row.findViewById(R.id.action);
+            ImageButton action = (ImageButton) row.findViewById(R.id.action);
 
-            String v = data.get(position);
+            Pair<String, String> v = data.get(position);
 
-            info.setText(v);
-            type.setText(dataType);
+            info.setText(v.first());
+            type.setText(v.second());
 
-            action.setTag(v);
-            row.setTag(v);
+            action.setTag(v.first());
+            row.setTag(v.first());
 
             action.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
-                    Log.i(TAG, "send message" + v.getTag());
-
-                    String phone_number = (String)v.getTag();
-
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("sms:" + phone_number)));
+                    actionClick(v);
                 }
             });
 
             row.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Log.i(TAG, "call message");
-                    String phone_number = (String)v.getTag();
-                    assert (phone_number != null && !phone_number.equals(""));
-
-                    startActivity(new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + phone_number)));
+                    rowClick(v);
                 }
             });
 
+            setRow(row);
+
             return row;
+        }
+
+        protected void rowClick(View v){
+
+        }
+
+        protected void actionClick(View v){
+
+        }
+
+        protected void setRow(View row){
+
         }
     }
 
-    private class EmailAdapter extends ArrayAdapter<String> {
-        private ArrayList<String> data;
-        String dataType;
-
-        public EmailAdapter(Context context, int resource, int textViewResourceId,
-                         ArrayList<String> l, String type) {
-            super(context, resource, textViewResourceId, l);
-
-            data = l;
-            dataType = type;
+    private class PhoneAdapter extends ContactAdapter {
+        public PhoneAdapter(Context context, int resource, ArrayList<Pair<String, String>> l) {
+            super(context, resource, l);
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            return setList(position, parent);
+        protected void setRow(View row){
+            ImageButton btn = (ImageButton)row.findViewById(R.id.action);
+            btn.setBackgroundResource(R.drawable.ic_message_24dp);
+        }
+        @Override
+        protected void rowClick(View v){
+            call(v);
         }
 
-        private View setList(int position, ViewGroup parent) {
-            LayoutInflater inf = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        @Override
+        protected void actionClick(View v){
+            sendSMS(v);
+        }
 
-            View row = inf.inflate(R.layout.contact_detail, parent, false);
+        private void call(View v) {
+            Log.i(TAG, "call message");
+            String phone_number = (String) v.getTag();
+            assert (phone_number != null && !phone_number.equals(""));
 
-            TextView info = (TextView) row.findViewById(R.id.info);
-            TextView type = (TextView) row.findViewById(R.id.type);
-            Button action = (Button) row.findViewById(R.id.action);
+            startActivity(new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + phone_number)));
+        }
 
-            String v = data.get(position);
+        private void sendSMS(View v) {
+            Log.i(TAG, "send message" + v.getTag());
+            String phone_number = (String) v.getTag();
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("sms:" + phone_number)));
+        }
+    }
 
-            info.setText(v);
-            type.setText(dataType);
+    private class EmailAdapter extends ContactAdapter {
+        public EmailAdapter(Context context, int resource, ArrayList<Pair<String, String>> l) {
+            super(context, resource, l);
+        }
 
-            action.setTag(v);
-            action.setVisibility(View.INVISIBLE);
+        @Override
+        protected void rowClick(View v){
+            sendEmail(v);
+        }
 
-            row.setTag(v);
+        private void sendEmail(View v) {
+            Log.i(TAG, "send email message");
+            String email = (String) v.getTag();
+            Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + email));
 
-            row.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    String email = (String) v.getTag();
-                    Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + email));
+            startActivity(intent);
+        }
 
-                    startActivity(intent);
-
-                    Log.i(TAG, "send email message");
-                }
-            });
-
-            return row;
+        @Override
+        protected void setRow(View row){
+            row.findViewById(R.id.action).setVisibility(View.INVISIBLE);
         }
     }
 }

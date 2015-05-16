@@ -1,4 +1,4 @@
-package com.github.zzn01.phone;
+package utils;
 
 /**
  * Created by zzn on 3/31/15.
@@ -9,7 +9,7 @@ public class TimeDelta {
     public int min;
     public int sec;
 
-    TimeDelta(int bigsec) {
+    public TimeDelta(int bigsec) {
         day = bigsec / (24 * 60 * 60);
 
         bigsec = bigsec % (24 * 60 * 60);

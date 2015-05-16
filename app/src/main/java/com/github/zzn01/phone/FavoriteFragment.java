@@ -1,49 +1,60 @@
 package com.github.zzn01.phone;
 
+import android.annotation.TargetApi;
+import android.app.Fragment;
 import android.app.ListFragment;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import utils.Pair;
+
 /**
  * Created by zzn on 5/1/15.
  */
-public class FavoriteFragment extends ListFragment {
+public class FavoriteFragment extends Fragment {
 
-    public static final String CONTACT_NAME = "com.github.zzn01.telephone.CallLogActivity.name";
-    public static final String CONTACT_NUMBER = "com.github.zzn01.telephone.CallLogActivity.number";
-    public static final String CONTACT_PHOTO = "com.github.zzn01.telephone.CallLogActivity.photo";
-    public static final String OUTGOING_SYMBOL = "<font color=green>\u2197</font>";
-    public static final String INCOMING_SYMBOL = "<font color=green>\u2199</font>";
-    public static final String MISSED_SYMBOL = "<font color=red>\u2199</font>";
-    private static final int MAX_COUNT = 3;
-    private static final String TAG = "CallLog";
-    ArrayList<CallLogEntry> callLogEntries;
-    private View currentRow;
+    private ArrayList<Pair<String, Long>> contacts;
 
-    public static LogFragment newInstance() {
-        final LogFragment fragment = new LogFragment();
+    public static FavoriteFragment newInstance() {
+        final FavoriteFragment fragment = new FavoriteFragment();
         return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
     }
 
     @Override
@@ -54,107 +65,86 @@ public class FavoriteFragment extends ListFragment {
             return null;
         }
 
-        callLogEntries = new ArrayList<>();
+        contacts = ContactHelper.getFrequentContacts(inflater.getContext().getContentResolver());
 
-        Cursor curLog = CallLogHelper.getAllCallLogs(inflater.getContext().getContentResolver());
-        setCallLogEntries(curLog);
-        curLog.close();
+        View custom = inflater.inflate(R.layout.activity_favorite, container, false);
 
-        setListAdapter(new MyAdapter(inflater.getContext(), android.R.layout.simple_list_item_1,
-                R.id.tvNameMain, callLogEntries));
 
-        Log.v(TAG, "on Resume");
+        GridView gridview = (GridView) custom.findViewById(R.id.gridview);
+        gridview.setAdapter(new ImageAdapter(inflater.getContext(), contacts));
 
-        return super.onCreateView(inflater, container, savedInstanceState);
+        gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+                call("1234567");
+            }
+        });
+
+        return custom;
     }
 
-    private void switchState(View row) {
-        LinearLayout op = (LinearLayout) row.findViewById(R.id.operation);
-        switch (op.getVisibility()) {
-            case View.GONE:
-                op.setVisibility(View.VISIBLE);
-                break;
-            case View.VISIBLE:
-                op.setVisibility(View.GONE);
-                break;
-            default:
-                op.setVisibility(View.GONE);
+    public class ImageAdapter extends BaseAdapter {
+        private Context mContext;
+        ArrayList<Pair<String,Long>> contacts;
+
+        public ImageAdapter(Context c, ArrayList<Pair<String, Long>> data) {
+            mContext = c;
+            contacts = data;
         }
-    }
 
-    private void setCallLogEntries(Cursor curLog) {
-        CallLogEntry item = null;
-        while (curLog.moveToNext()) {
-            String number = curLog.getString(curLog.getColumnIndex(android.provider.CallLog.Calls.NUMBER));
+        public int getCount() {
+            return contacts.size();
+        }
 
-            int size = callLogEntries.size();
-            if (size > 0) {
-                item = callLogEntries.get(size - 1);
+        public Object getItem(int position) {
+            return null;
+        }
+
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        // create a new ImageView for each item referenced by the Adapter
+        @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+        public View getView(int position, View convertView, ViewGroup parent) {
+            TextView tv;
+            if (convertView == null) {
+                // if it's not recycled, initialize some attributes
+                LayoutInflater inf = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                tv = (TextView) inf.inflate(R.layout.favorite, null);
+                tv.setLayoutParams(new GridView.LayoutParams(380, 320));
+            //    tv.setPadding(1, 1, 1, 1);
+            } else {
+                tv = (TextView) convertView;
             }
 
-            if (item == null || !number.equals(item.number)) {
-                item = new CallLogEntry();
-                item.number = number;
-                callLogEntries.add(item);
-                item.name = curLog.getString(curLog.getColumnIndex(android.provider.CallLog.Calls.CACHED_NAME));
-                item.photoID = curLog.getInt(curLog.getColumnIndex(android.provider.CallLog.Calls.CACHED_PHOTO_ID));
+            Pair<String, Long> p = contacts.get(position);
+            int photoId = p.second().intValue();
+            if (photoId>0) {
+                BitmapDrawable a = new BitmapDrawable(ContactHelper.queryContactImage(mContext.getContentResolver(), photoId));
+                tv.setBackground(a);
+            }else{
+                tv.setBackgroundResource(defaultImg[position % defaultImg.length]);
             }
+            tv.setText(p.first());
 
-            String callDate = curLog.getString(curLog.getColumnIndex(android.provider.CallLog.Calls.DATE));
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-
-            item.lastDate = formatter.format(new Date(Long.parseLong(callDate)));
-            int type = curLog.getInt(curLog.getColumnIndex(android.provider.CallLog.Calls.TYPE));
-
-            item.types.add(type);
+            return tv;
         }
     }
 
-    public void listItemClick(View v) {
+    private int[] defaultImg = {
+            R.drawable.contact1,
+            R.drawable.contact2,
+            R.drawable.contact3,
+            R.drawable.contact4,
+            R.drawable.contact5,
+            R.drawable.contact6,
+            R.drawable.contact7,
+    };
 
-        Log.d(TAG, "List item click ");
-
-        if (currentRow == v) {
-            switchState(currentRow);
-            currentRow = null;
-            return;
-        }
-
-        if (currentRow != null) {
-            switchState(currentRow);
-        }
-
-        switchState(v);
-        currentRow = v;
-    }
-
-    public void call_it(View v) {
-
-        Log.d("Button", "call it");
-
-        TextView n = (TextView) currentRow.findViewById(R.id.tvNumberMain);
-
-        String phone_number = n.getText().toString();
-        assert (phone_number != null && !phone_number.equals(""));
-
-        //封装一个拨打电话的intent，并且将电话号码包装成一个uri对象传入
-        Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + phone_number));
-        //这是最重要的一步，调用系统自带的拨号程序
+    public void call(String phoneNumber) {
+        assert (phoneNumber != null && !phoneNumber.equals(""));
+        Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + phoneNumber));
         startActivity(intent);
-    }
-
-    public void call_detail(View v) {
-        Intent intent = new Intent(getActivity(), CallLogDetailActivity.class);
-        Log.d("Button", "call detail");
-
-        CallLogEntry callLogEntry = callLogEntries.get((int) currentRow.getTag());
-
-        intent.putExtra(CONTACT_NAME, callLogEntry.name);
-        intent.putExtra(CONTACT_NUMBER, callLogEntry.number);
-        intent.putExtra(CONTACT_PHOTO, callLogEntry.photoID);
-
-        startActivity(intent);
-
     }
 
     @Override
@@ -170,92 +160,5 @@ public class FavoriteFragment extends ListFragment {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    private class CallLogEntry {
-        public String name;
-        public String number;
-        public String lastDate;
-        public int photoID;
-        ArrayList<Integer> types;
-
-        CallLogEntry() {
-            types = new ArrayList<>();
-        }
-    }
-
-    private class MyAdapter extends ArrayAdapter<CallLogEntry> {
-
-        public MyAdapter(Context context, int resource, int textViewResourceId,
-                         ArrayList<CallLogEntry> l) {
-
-            super(context, resource, textViewResourceId, l);
-
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-
-            return setList(position, parent);
-        }
-
-        private void setType(ArrayList<Integer> types, TextView t) {
-            String type = "";
-            String suffix = "";
-
-            int count = types.size();
-            if (count > MAX_COUNT) {
-                suffix = "(" + count + ")";
-                count = MAX_COUNT;
-            }
-            for (int i = 0; i < count; ++i) {
-                switch (types.get(i)) {
-                    case android.provider.CallLog.Calls.OUTGOING_TYPE:
-                        type += OUTGOING_SYMBOL;
-                        break;
-                    case android.provider.CallLog.Calls.MISSED_TYPE:
-                        type += MISSED_SYMBOL;
-                        break;
-                    case android.provider.CallLog.Calls.INCOMING_TYPE:
-                        type += INCOMING_SYMBOL;
-                        break;
-                }
-            }
-            t.setText(Html.fromHtml(type + suffix));
-        }
-
-        private View setList(int position, ViewGroup parent) {
-            LayoutInflater inf = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-            View row = inf.inflate(R.layout.call_log_item_style, parent, false);
-
-            TextView tvName = (TextView) row.findViewById(R.id.tvNameMain);
-            TextView tvNumber = (TextView) row.findViewById(R.id.tvNumberMain);
-            TextView tvDate = (TextView) row.findViewById(R.id.tvDate);
-            TextView tvType = (TextView) row.findViewById(R.id.type_img);
-
-            CallLogEntry item = callLogEntries.get(position);
-
-            tvName.setText(item.name);
-            tvNumber.setText(item.number);
-
-            setType(item.types, tvType);
-
-            tvDate.setText(item.lastDate);
-
-            LinearLayout op = (LinearLayout) row.findViewById(R.id.operation);
-            op.setVisibility(View.GONE);
-
-            row.setTag(position);
-
-            row.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    listItemClick(v);
-                }
-            });
-
-            return row;
-        }
     }
 }
