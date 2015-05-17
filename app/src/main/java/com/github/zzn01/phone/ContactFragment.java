@@ -5,6 +5,7 @@ import android.app.ListFragment;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.util.Log;
@@ -12,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -24,6 +26,7 @@ public class ContactFragment extends ListFragment {
     private class SimpleContact{
         String name;
         int id;
+        String thumbnail;
     }
 
     ArrayList<SimpleContact> contacts;
@@ -44,26 +47,28 @@ public class ContactFragment extends ListFragment {
     public View onCreateView(LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
 
-        if (container == null) {
-            return null;
-        }
+        return inflater.inflate(R.layout.list_fragment, container, false);
+    }
 
-        Cursor curLog = ContactHelper.execute(inflater.getContext().getContentResolver(), null, null);
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+
+        super.onActivityCreated(savedInstanceState);
+
+
+        Cursor curLog = ContactHelper.execute(getActivity().getContentResolver(), null, null);
         getContacts(curLog);
         curLog.close();
 
-        setListAdapter(new ContactAdapter(inflater.getContext(), android.R.layout.simple_list_item_1,
-                 contacts));
-
-        return super.onCreateView(inflater, container, savedInstanceState);
+        setListAdapter(new ContactAdapter(getActivity(), R.layout.contact, contacts));
     }
-
 
     private void getContacts(Cursor curLog) {
         while (curLog.moveToNext()) {
             SimpleContact contact = new SimpleContact();
             contact.name = curLog.getString(curLog.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME_PRIMARY));
             contact.id = curLog.getInt(curLog.getColumnIndex(ContactsContract.Contacts._ID));
+            contact.thumbnail = curLog.getString(curLog.getColumnIndex(ContactsContract.Contacts.PHOTO_THUMBNAIL_URI));
             contacts.add(contact);
 
 //            Log.d("test", curLog.getString(curLog.getColumnIndex(ContactsContract.Contacts.LOOKUP_KEY)));
@@ -73,30 +78,36 @@ public class ContactFragment extends ListFragment {
 
     private class ContactAdapter extends ArrayAdapter<SimpleContact> {
 
+        LayoutInflater inflater ;
+
         public ContactAdapter(Context context, int resource,
                          ArrayList<SimpleContact> l) {
 
             super(context, resource, l);
+            inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
         }
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-
-            return setList(position, parent);
-        }
-
-        private View setList(int position, ViewGroup parent) {
-            LayoutInflater inf = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-            View row = inf.inflate(R.layout.contact, parent, false);
+            View row;
+            if (convertView==null) {
+                row = inflater.inflate(R.layout.contact, parent, false);
+            }else{
+                row = convertView;
+            }
 
             TextView contact = (TextView) row.findViewById(R.id.displayName);
+            ImageView thumbnail = (ImageView) row.findViewById(R.id.thumbnail);
 
             SimpleContact item = contacts.get(position);
 
             contact.setText(item.name);
             contact.setTag(R.id.displayName, item.id);
+
+            if (item.thumbnail!=null) {
+                thumbnail.setImageURI(Uri.parse(item.thumbnail));
+            }
 
             contact.setOnClickListener(new View.OnClickListener() {
                 @Override
