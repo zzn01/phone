@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Html;
+import android.text.Spanned;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -50,29 +51,27 @@ public class LogFragment extends ListFragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
-
-        if (container == null) {
-            return null;
-        }
-
-        Cursor curLog = CallLogHelper.getAllCallLogs(inflater.getContext().getContentResolver());
-        setCallLogEntries(curLog);
-        curLog.close();
-
-        setListAdapter(new MyAdapter(inflater.getContext(), android.R.layout.simple_list_item_1,
-                R.id.tvNameMain, callLogEntries));
-
-        Log.v(TAG, "onCreateView");
-
-
-        return super.onCreateView(inflater, container, savedInstanceState);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        LinearLayout view = (LinearLayout) inflater.inflate(R.layout.list_fragment, container, false);
+        ListView lv = (ListView) view.findViewById(android.R.id.list);
+        lv.setDivider(null);
+//        lv.setDividerHeight(1);
+        TextView empty = (TextView) view.findViewById(android.R.id.empty);
+        empty.setText("not more call log");
+        return view;
     }
 
     @Override
-    public void onActivityCreated(Bundle savedState) {
-        super.onActivityCreated(savedState);
+    public void onActivityCreated(Bundle savedInstanceState) {
+
+        super.onActivityCreated(savedInstanceState);
+
+        Cursor curLog = CallLogHelper.getAllCallLogs(getActivity().getContentResolver());
+        setCallLogEntries(curLog);
+        curLog.close();
+
+        setListAdapter(new LogAdapter(getActivity(), R.layout.call_log_item_style, callLogEntries));
+
         getListView().setLongClickable(true);
 
         getListView().setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -196,22 +195,25 @@ public class LogFragment extends ListFragment {
         }
     }
 
-    private class MyAdapter extends ArrayAdapter<CallLogEntry> {
+    private class LogAdapter extends ArrayAdapter<CallLogEntry> {
 
-        public MyAdapter(Context context, int resource, int textViewResourceId,
-                         ArrayList<CallLogEntry> l) {
-
-            super(context, resource, textViewResourceId, l);
-
+        private class ViewHolder{
+            TextView Name;
+            TextView Number;
+            TextView Date;
+            TextView Type;
+            TextView CallIt;
+            TextView Detail;
+            LinearLayout op;
         }
 
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public LogAdapter(Context context, int resource, ArrayList<CallLogEntry> l) {
 
-            return setList(position, parent);
+            super(context, resource, l);
         }
 
-        private void setType(ArrayList<Integer> types, TextView t) {
+
+        private Spanned getType(ArrayList<Integer> types) {
             String type = "";
             String suffix = "";
 
@@ -233,50 +235,64 @@ public class LogFragment extends ListFragment {
                         break;
                 }
             }
-            t.setText(Html.fromHtml(type + suffix));
+            return Html.fromHtml(type + suffix);
         }
 
-        private View setList(int position, ViewGroup parent) {
+        private View newView(int position, View convertView, ViewGroup parent) {
+            ViewHolder viewHolder = new ViewHolder();
             LayoutInflater inf = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
             View row = inf.inflate(R.layout.call_log_item_style, parent, false);
 
-            TextView tvName = (TextView) row.findViewById(R.id.tvNameMain);
-            TextView tvNumber = (TextView) row.findViewById(R.id.tvNumberMain);
-            TextView tvDate = (TextView) row.findViewById(R.id.tvDate);
-            TextView tvType = (TextView) row.findViewById(R.id.type_img);
+            viewHolder.Name = (TextView) row.findViewById(R.id.tvNameMain);
+            viewHolder.Number = (TextView) row.findViewById(R.id.tvNumberMain);
+            viewHolder.Date = (TextView) row.findViewById(R.id.tvDate);
+            viewHolder.Type = (TextView) row.findViewById(R.id.type_img);
+            viewHolder.op = (LinearLayout) row.findViewById(R.id.operation);
+            viewHolder.CallIt = (TextView) row.findViewById(R.id.btn_call_it);
+            viewHolder.Detail = (TextView) row.findViewById(R.id.btn_detail);
+
+            row.setTag(viewHolder);
+            return row;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+
+            final ViewHolder viewHolder;
+            if (convertView==null){
+                convertView = newView(position, convertView, parent);
+            }
+            viewHolder = (ViewHolder)convertView.getTag();
 
             CallLogEntry item = callLogEntries.get(position);
 
-            tvName.setText(item.name);
-            tvNumber.setText(item.number);
+            viewHolder.Name.setText(item.name);
+            viewHolder.Number.setText(item.number);
 
-            setType(item.types, tvType);
+            viewHolder.Type.setText(getType(item.types));
 
-            tvDate.setText(item.lastDate);
+            viewHolder.Date.setText(item.lastDate);
 
-            LinearLayout op = (LinearLayout) row.findViewById(R.id.operation);
-            op.setVisibility(View.GONE);
+            viewHolder.op.setVisibility(View.GONE);
 
-            TextView call_it = (TextView)op.findViewById(R.id.btn_call_it);
-            call_it.setTag(position);
-            call_it.setOnClickListener(new View.OnClickListener() {
+            viewHolder.CallIt.setTag(position);
+            viewHolder.CallIt.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     recall(callLogEntries.get((int)v.getTag()));
                 }
             });
 
-            TextView detail = (TextView)op.findViewById(R.id.btn_detail);
-            detail.setTag(position);
-            detail.setOnClickListener(new View.OnClickListener() {
+            viewHolder.Detail.setTag(position);
+            viewHolder.Detail.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     show_detail(callLogEntries.get((int)v.getTag()));
                 }
             });
 
-            return row;
+            return convertView;
         }
     }
 }
