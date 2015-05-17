@@ -2,40 +2,22 @@ package com.github.zzn01.phone;
 
 import android.annotation.TargetApi;
 import android.app.Fragment;
-import android.app.ListFragment;
-import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.ContactsContract;
-import android.text.Html;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TableLayout;
-import android.widget.TableRow;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
 import utils.Pair;
 
@@ -67,7 +49,7 @@ public class FavoriteFragment extends Fragment {
 
         contacts = ContactHelper.getFrequentContacts(inflater.getContext().getContentResolver());
 
-        View custom = inflater.inflate(R.layout.activity_favorite, container, false);
+        View custom = inflater.inflate(R.layout.favorite_fragment, container, false);
 
 
         GridView gridview = (GridView) custom.findViewById(R.id.gridview);
