@@ -123,23 +123,13 @@ public class FavoriteFragment extends Fragment {
                 BitmapDrawable a = new BitmapDrawable(ContactHelper.queryContactImage(mContext.getContentResolver(), photoId));
                 tv.setBackground(a);
             }else{
-                tv.setBackgroundResource(defaultImg[position % defaultImg.length]);
+                tv.setBackgroundResource(Common.getDefaultImg());
             }
             tv.setText(p.first());
 
             return tv;
         }
     }
-
-    private int[] defaultImg = {
-            R.drawable.contact1,
-            R.drawable.contact2,
-            R.drawable.contact3,
-            R.drawable.contact4,
-            R.drawable.contact5,
-            R.drawable.contact6,
-            R.drawable.contact7,
-    };
 
     public void call(String phoneNumber) {
         assert (phoneNumber != null && !phoneNumber.equals(""));
