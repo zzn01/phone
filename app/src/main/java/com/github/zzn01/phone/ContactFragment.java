@@ -5,6 +5,10 @@ import android.app.ListFragment;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Path;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -75,7 +79,6 @@ public class ContactFragment extends ListFragment {
         }
     }
 
-
     private class ContactAdapter extends ArrayAdapter<SimpleContact> {
 
         LayoutInflater inflater ;
@@ -103,13 +106,15 @@ public class ContactFragment extends ListFragment {
             SimpleContact item = contacts.get(position);
 
             contact.setText(item.name);
-            contact.setTag(R.id.displayName, item.id);
 
             if (item.thumbnail!=null) {
                 thumbnail.setImageURI(Uri.parse(item.thumbnail));
+            }else{
+                thumbnail.setImageResource(Common.getDefaultImg());
             }
 
-            contact.setOnClickListener(new View.OnClickListener() {
+            row.setTag(R.id.displayName, item.id);
+            row.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
 
