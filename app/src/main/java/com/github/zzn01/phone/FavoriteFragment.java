@@ -8,6 +8,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,7 +27,7 @@ import utils.Pair;
  */
 public class FavoriteFragment extends Fragment {
 
-    private ArrayList<Pair<String, Long>> contacts;
+    private ArrayList<Common.ContactShow> contacts;
 
     public static FavoriteFragment newInstance() {
         final FavoriteFragment fragment = new FavoriteFragment();
@@ -57,7 +58,24 @@ public class FavoriteFragment extends Fragment {
 
         gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-                call("1234567");
+                Common.ContactShow c = (Common.ContactShow) v.getTag();
+                ArrayList<Common.Phone> phones = ContactHelper.getPhone(getActivity().getContentResolver(), c.Id);
+
+                String number = null;
+                for (Common.Phone phone : phones) {
+                    if (phone.Primary) {
+                        number = phone.Number;
+                    }
+                    Log.i("number", phone.toString());
+                }
+
+                // TODO: choose one to call
+                if (number == null && phones.size() > 0) {
+                    Log.i("number", phones.toString());
+                    return;
+                }
+
+                call(number);
             }
         });
 
@@ -66,9 +84,9 @@ public class FavoriteFragment extends Fragment {
 
     public class ImageAdapter extends BaseAdapter {
         private Context mContext;
-        ArrayList<Pair<String,Long>> contacts;
+        ArrayList<Common.ContactShow> contacts;
 
-        public ImageAdapter(Context c, ArrayList<Pair<String, Long>> data) {
+        public ImageAdapter(Context c, ArrayList<Common.ContactShow> data) {
             mContext = c;
             contacts = data;
         }
@@ -99,15 +117,17 @@ public class FavoriteFragment extends Fragment {
                 tv = (TextView) convertView;
             }
 
-            Pair<String, Long> p = contacts.get(position);
-            int photoId = p.second().intValue();
-            if (photoId>0) {
-                BitmapDrawable a = new BitmapDrawable(ContactHelper.queryContactImage(mContext.getContentResolver(), photoId));
+
+            Common.ContactShow p = contacts.get(position);
+            tv.setTag(p);
+            if (p.PhotoId>0) {
+                BitmapDrawable a = new BitmapDrawable(ContactHelper.queryContactImage(mContext.getContentResolver(), p.PhotoId));
                 tv.setBackground(a);
             }else{
-                tv.setBackgroundResource(Common.getDefaultImg(p.first()));
+                tv.setBackgroundResource(Common.getDefaultImg(p.Name));
             }
-            tv.setText(p.first());
+
+            tv.setText(p.Name);
 
             return tv;
         }
