@@ -26,10 +26,20 @@ import utils.TimeDelta;
 
 public class CallLogDetailActivity extends ListActivity {
     private static final String TAG = "CallLog";
-    private String name;
-    private int photoID;
+    private static final  String LOGENTRY="CALLLOGDETAILACTIVITY.ENTRY";
+    private Common.CallLogEntry entry;
 
     private ArrayList<CallEntry> callEntries;
+
+    public static Intent newIntent(Context context, Common.CallLogEntry entry){
+        Intent intent = new Intent(context, CallLogDetailActivity.class);
+        Log.d("Button", "call detail");
+
+        intent.putExtra(LOGENTRY, new Common.ParcelableCallLogEntry(entry));
+
+        return intent;
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,17 +47,14 @@ public class CallLogDetailActivity extends ListActivity {
         setContentView(R.layout.activity_call_log_detail);
 
         callEntries = new ArrayList<>();
-        Intent intent = getIntent();
 
-        photoID = intent.getIntExtra(LogFragment.CONTACT_PHOTO, -1);
+        initArgument();
 
-        name = intent.getStringExtra(LogFragment.CONTACT_NAME);
         Cursor curLog;
-        if (name == null || name.equals("")) {
-            name = intent.getStringExtra(LogFragment.CONTACT_NUMBER);
-            curLog = CallLogHelper.getCallLogsByNumber(getContentResolver(), name);
+        if (entry.name == null ||entry.name.equals("")) {
+            curLog = CallLogHelper.getCallLogsByNumber(getContentResolver(), entry.number);
         } else {
-            curLog = CallLogHelper.getCallLogsByName(getContentResolver(), name);
+            curLog = CallLogHelper.getCallLogsByName(getContentResolver(), entry.name);
         }
 
         //TODO: check error
@@ -63,12 +70,24 @@ public class CallLogDetailActivity extends ListActivity {
                 R.id.tvNameMain, callEntries));
     }
 
+    private void initArgument(){
+        Intent intent = getIntent();
+        entry = ((Common.ParcelableCallLogEntry)intent.getParcelableExtra(LOGENTRY)).getEntry();
+    }
+
     private void setHeader() {
         TextView header = (TextView) findViewById(R.id.contact_name);
+        String name=entry.name;
+        if (name==null || name.equals("")){
+            name = entry.number;
+        }
         header.setText(name);
-        if (photoID != -1) {
-            ImageView pic = (ImageView) findViewById(R.id.contact_pic);
-            pic.setImageBitmap(ContactHelper.queryContactImage(getContentResolver(), photoID));
+
+        ImageView pic = (ImageView) findViewById(R.id.contact_pic);
+        if (entry.photoID > 0) {
+            pic.setImageBitmap(ContactHelper.queryContactImage(getContentResolver(), entry.photoID));
+        }else{
+            pic.setImageResource(Common.getDefaultImg(name));
         }
     }
 

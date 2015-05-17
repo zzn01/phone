@@ -18,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -51,7 +52,11 @@ public class ContactFragment extends ListFragment {
     public View onCreateView(LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
 
-        return inflater.inflate(R.layout.list_fragment, container, false);
+        LinearLayout view = (LinearLayout) inflater.inflate(R.layout.list_fragment, container, false);
+        TextView empty = (TextView) view.findViewById(android.R.id.empty);
+
+        empty.setText("not more contact");
+        return view;
     }
 
     @Override
@@ -117,7 +122,7 @@ public class ContactFragment extends ListFragment {
                 @Override
                 public void onClick(View v) {
 
-                    int id = (int)v.getTag(R.id.displayName);
+                    int id = (int) v.getTag(R.id.displayName);
 
                     Log.i("contacts:", "id:" + id);
                     show_detail(id);

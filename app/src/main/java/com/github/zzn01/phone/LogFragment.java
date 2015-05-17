@@ -1,12 +1,15 @@
 package com.github.zzn01.phone;
 
 import android.app.Dialog;
+import android.app.FragmentManager;
 import android.app.ListFragment;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.text.Html;
 import android.text.Spanned;
 import android.util.Log;
@@ -36,7 +39,7 @@ public class LogFragment extends ListFragment {
     public static final String MISSED_SYMBOL = "<font color=red>\u2199</font>";
     private static final int MAX_COUNT = 3;
     private static final String TAG = "CallLog";
-    ArrayList<CallLogEntry> callLogEntries;
+    ArrayList<Common.CallLogEntry> callLogEntries;
     private View currentRow;
 
     public static LogFragment newInstance() {
@@ -73,23 +76,21 @@ public class LogFragment extends ListFragment {
         setListAdapter(new LogAdapter(getActivity(), R.layout.call_log_item_style, callLogEntries));
 
         getListView().setLongClickable(true);
-
         getListView().setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view,
-                                           int position, long id) {
-                Dialog dialog= new Dialog(view.getContext());
-                CallLogEntry  callLogEntry = callLogEntries.get(position);
-                dialog.setTitle(callLogEntry.name);
-                dialog.setContentView(R.layout.operation);
-                dialog.show();
-                return true;
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+
+                OperationDialog dialog = OperationDialog.newInstance(callLogEntries.get(position));
+                FragmentManager fragmentManager = getActivity().getFragmentManager();
+                dialog.show(fragmentManager, "dialog");
+
+                return  true;
             }
         });
     }
 
     private void setCallLogEntries(Cursor curLog) {
-        CallLogEntry item = null;
+        Common.CallLogEntry item = null;
         while (curLog.moveToNext()) {
             String number = curLog.getString(curLog.getColumnIndex(android.provider.CallLog.Calls.NUMBER));
 
@@ -99,7 +100,7 @@ public class LogFragment extends ListFragment {
             }
 
             if (item == null || !number.equals(item.number)) {
-                item = new CallLogEntry();
+                item = new Common.CallLogEntry();
                 item.number = number;
                 callLogEntries.add(item);
                 item.name = curLog.getString(curLog.getColumnIndex(android.provider.CallLog.Calls.CACHED_NAME));
@@ -116,7 +117,7 @@ public class LogFragment extends ListFragment {
         }
     }
 
-    public void recall(CallLogEntry callLogEntry) {
+    public void recall(Common.CallLogEntry callLogEntry) {
 
         Log.d("Button", "call it");
         String phone_number = callLogEntry.number;
@@ -128,16 +129,11 @@ public class LogFragment extends ListFragment {
         startActivity(intent);
     }
 
-    public void show_detail(CallLogEntry callLogEntry) {
-        Intent intent = new Intent(getActivity(), CallLogDetailActivity.class);
-        Log.d("Button", "call detail");
-
-        intent.putExtra(CONTACT_NAME, callLogEntry.name);
-        intent.putExtra(CONTACT_NUMBER, callLogEntry.number);
-        intent.putExtra(CONTACT_PHOTO, callLogEntry.photoID);
-
-        startActivity(intent);
+    public void show_detail(Common.CallLogEntry callLogEntry) {
+        startActivity(CallLogDetailActivity.newIntent(getActivity(), callLogEntry));
     }
+
+
 
     @Override
     public void onListItemClick (ListView l, View row, int position, long id) {
@@ -178,24 +174,8 @@ public class LogFragment extends ListFragment {
         return super.onOptionsItemSelected(item);
     }
 
-    private class CallLogEntry {
-        public String name;
-        public String number;
-        public String lastDate;
-        public int photoID;
-        ArrayList<Integer> types;
 
-        CallLogEntry() {
-            types = new ArrayList<>();
-        }
-
-        @Override
-        public String toString(){
-            return "name:"+name+",number:"+number+", lastDate:"+lastDate;
-        }
-    }
-
-    private class LogAdapter extends ArrayAdapter<CallLogEntry> {
+    private class LogAdapter extends ArrayAdapter<Common.CallLogEntry> {
 
         private class ViewHolder{
             TextView Name;
@@ -207,7 +187,7 @@ public class LogFragment extends ListFragment {
             LinearLayout op;
         }
 
-        public LogAdapter(Context context, int resource, ArrayList<CallLogEntry> l) {
+        public LogAdapter(Context context, int resource, ArrayList<Common.CallLogEntry> l) {
 
             super(context, resource, l);
         }
@@ -265,7 +245,7 @@ public class LogFragment extends ListFragment {
             }
             viewHolder = (ViewHolder)convertView.getTag();
 
-            CallLogEntry item = callLogEntries.get(position);
+            Common.CallLogEntry item = callLogEntries.get(position);
 
             viewHolder.Name.setText(item.name);
             viewHolder.Number.setText(item.number);
