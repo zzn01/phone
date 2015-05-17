@@ -59,7 +59,6 @@ public class ContactFragment extends ListFragment {
 
         super.onActivityCreated(savedInstanceState);
 
-
         Cursor curLog = ContactHelper.execute(getActivity().getContentResolver(), null, null);
         getContacts(curLog);
         curLog.close();
@@ -110,7 +109,7 @@ public class ContactFragment extends ListFragment {
             if (item.thumbnail!=null) {
                 thumbnail.setImageURI(Uri.parse(item.thumbnail));
             }else{
-                thumbnail.setImageResource(Common.getDefaultImg());
+                thumbnail.setImageResource(Common.getDefaultImg(item.name));
             }
 
             row.setTag(R.id.displayName, item.id);

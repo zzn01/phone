@@ -123,7 +123,7 @@ public class FavoriteFragment extends Fragment {
                 BitmapDrawable a = new BitmapDrawable(ContactHelper.queryContactImage(mContext.getContentResolver(), photoId));
                 tv.setBackground(a);
             }else{
-                tv.setBackgroundResource(Common.getDefaultImg());
+                tv.setBackgroundResource(Common.getDefaultImg(p.first()));
             }
             tv.setText(p.first());
 

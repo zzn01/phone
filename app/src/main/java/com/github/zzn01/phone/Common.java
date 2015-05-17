@@ -17,8 +17,17 @@ public class Common {
     };
 
     public static int getDefaultImg(){
-        // i==> (0, defaultImg.length]
+        // i==> [1, defaultImg.length]
         int i = Utils.randInt(1, defaultImg.length);
         return defaultImg[i - 1];
+    }
+
+    public static int getDefaultImg(int id){
+        return defaultImg[id % defaultImg.length];
+    }
+
+    public static int getDefaultImg(String name){
+        int i = name.charAt(0) + name.charAt(name.length() - 1);
+        return defaultImg[i % defaultImg.length];
     }
 }
