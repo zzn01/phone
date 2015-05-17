@@ -2,6 +2,7 @@ package com.github.zzn01.phone;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.provider.ContactsContract;
 
 import java.util.ArrayList;
 
@@ -35,6 +36,52 @@ public class Common {
         int i = name.charAt(0) + name.charAt(name.length() - 1);
         return defaultImg[i % defaultImg.length];
     }
+
+    public static class ContactShow{
+        int Id;
+        String Name;
+        int PhotoId;
+
+        ContactShow(int id, String name, int photoid){
+            Id = id;
+            Name =name;
+            PhotoId = photoid;
+        }
+    }
+
+    public static class Phone{
+        String Number;
+        String Type;
+        boolean Primary;
+
+        Phone(String number, String type, boolean primary){
+            Number = number;
+            Type =type;
+            Primary = primary;
+        }
+
+        Phone(String number, String type, int primary){
+            Number = number;
+            Type =type;
+            Primary = (primary > 0) ;
+        }
+
+        @Override
+        public String toString(){
+            return Type + ":" + Number + ":" +Primary;
+        }
+    }
+
+    public static class Email{
+        String Addr;
+        String Type;
+
+        Email(String addr, String type){
+            Addr =addr;
+            Type= type;
+        }
+    }
+
 
     public static class CallLogEntry {
         public String name;

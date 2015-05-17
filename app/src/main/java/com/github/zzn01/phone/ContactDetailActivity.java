@@ -123,11 +123,34 @@ public class ContactDetailActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    private class ContactAdapter extends ArrayAdapter<Pair<String,String>> {
-        private ArrayList<Pair<String,String>> data;
+    private class ContactAdapter<T> extends ArrayAdapter<T> {
+        private ArrayList<T> data;
         private LayoutInflater inflater;
+//        private static final int VIEW_HOLDER=1;
 
-        public ContactAdapter(Context context, int resource, ArrayList<Pair<String,String>> l) {
+        protected class ViewHolder{
+            TextView Info;
+            TextView Type;
+            ImageButton Action;
+            View Row;
+        }
+
+        private View newView(ViewGroup parent){
+            ViewHolder vh = new ViewHolder();
+
+            View row = inflater.inflate(R.layout.contact_item, parent, false);
+
+            vh.Info= (TextView) row.findViewById(R.id.info);
+            vh.Type = (TextView) row.findViewById(R.id.type);
+            vh.Action = (ImageButton) row.findViewById(R.id.action);
+
+            vh.Row = row;
+
+            row.setTag(vh);
+            return row;
+        }
+
+        public ContactAdapter(Context context, int resource, ArrayList<T> l) {
             super(context, resource, l);
 
             inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -136,43 +159,31 @@ public class ContactDetailActivity extends Activity {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            View row;
 
+            final ViewHolder vh;
             if (convertView==null) {
-                row = inflater.inflate(R.layout.contact_item, parent, false);
-            }else{
-                row = convertView;
+                convertView = newView(parent);
             }
 
-            TextView info = (TextView) row.findViewById(R.id.info);
-            TextView type = (TextView) row.findViewById(R.id.type);
-            ImageButton action = (ImageButton) row.findViewById(R.id.action);
+            vh = (ViewHolder)convertView.getTag();
 
-            Pair<String, String> v = data.get(position);
+            setRow(vh, data.get(position));
 
-            info.setText(v.first());
-            type.setText(v.second());
-
-            action.setTag(v.first());
-            row.setTag(v.first());
-
-            action.setOnClickListener(new View.OnClickListener() {
+            vh.Action.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     actionClick(v);
                 }
             });
 
-            row.setOnClickListener(new View.OnClickListener() {
+            convertView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     rowClick(v);
                 }
             });
 
-            setRow(row);
-
-            return row;
+            return convertView;
         }
 
         protected void rowClick(View v){
@@ -183,21 +194,28 @@ public class ContactDetailActivity extends Activity {
 
         }
 
-        protected void setRow(View row){
+        protected void setRow(ViewHolder vh, T t){
 
         }
     }
 
-    private class PhoneAdapter extends ContactAdapter {
-        public PhoneAdapter(Context context, int resource, ArrayList<Pair<String, String>> l) {
+    private class PhoneAdapter extends ContactAdapter<Common.Phone> {
+        public PhoneAdapter(Context context, int resource, ArrayList<Common.Phone> l) {
             super(context, resource, l);
         }
 
         @Override
-        protected void setRow(View row){
-            ImageButton btn = (ImageButton)row.findViewById(R.id.action);
-            btn.setBackgroundResource(R.drawable.ic_message_24dp);
+        protected void setRow(ViewHolder vh, Common.Phone v){
+            vh.Action.setBackgroundResource(R.drawable.ic_message_24dp);
+
+            vh.Info.setText(v.Number);
+            vh.Type.setText(v.Type);
+
+            vh.Action.setTag(vh.Action.getId(), v.Number);
+
+            vh.Row.setTag(vh.Row.getId(), v.Number);
         }
+
         @Override
         protected void rowClick(View v){
             call(v);
@@ -210,21 +228,21 @@ public class ContactDetailActivity extends Activity {
 
         private void call(View v) {
             Log.i(TAG, "call message");
-            String phone_number = (String) v.getTag();
+            String phone_number = (String) v.getTag(v.getId());
             assert (phone_number != null && !phone_number.equals(""));
 
             startActivity(new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + phone_number)));
         }
 
         private void sendSMS(View v) {
-            Log.i(TAG, "send message" + v.getTag());
-            String phone_number = (String) v.getTag();
+            Log.i(TAG, "send message" + v.getTag(v.getId()));
+            String phone_number = (String) v.getTag(v.getId());
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("sms:" + phone_number)));
         }
     }
 
-    private class EmailAdapter extends ContactAdapter {
-        public EmailAdapter(Context context, int resource, ArrayList<Pair<String, String>> l) {
+    private class EmailAdapter extends ContactAdapter<Common.Email> {
+        public EmailAdapter(Context context, int resource, ArrayList<Common.Email> l) {
             super(context, resource, l);
         }
 
@@ -235,15 +253,21 @@ public class ContactDetailActivity extends Activity {
 
         private void sendEmail(View v) {
             Log.i(TAG, "send email message");
-            String email = (String) v.getTag();
+            String email = (String) v.getTag(v.getId());
             Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + email));
 
             startActivity(intent);
         }
-
         @Override
-        protected void setRow(View row){
-            row.findViewById(R.id.action).setVisibility(View.INVISIBLE);
+        protected void setRow(ViewHolder vh, Common.Email v){
+            vh.Action.setVisibility(View.INVISIBLE);
+
+            vh.Info.setText(v.Addr);
+            vh.Type.setText(v.Type);
+
+            vh.Action.setTag(vh.Action.getId(), v.Addr);
+
+            vh.Row.setTag(vh.Row.getId(), v.Addr);
         }
     }
 }
